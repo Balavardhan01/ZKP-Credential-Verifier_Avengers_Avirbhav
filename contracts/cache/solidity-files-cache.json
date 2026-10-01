@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\Balavardhan\\OneDrive\\Desktop\\Avengers-ZKP\\contracts\\contracts\\CredentialVerifier.sol": {
+      "lastModificationDate": 1790260323482,
+      "contentHash": "e8de7fca46ac2a37692b3cf1d3b14c51",
+      "sourceName": "contracts/CredentialVerifier.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "CredentialVerifier"
+      ]
+    }
+  }
+}
