@@ -119,7 +119,7 @@ export default function CandidateWalletPlatform() {
       }
 
       const provider = new ethers.JsonRpcProvider("http://127.0.0.1:8545");
-      const signer = await provider.getSigner(0);
+      const signer = await provider.getSigner();
       const verifierContract = new ethers.Contract(contractDetails.address, contractDetails.abi, signer);
 
       const dummyProofData = ethers.hexlify(ethers.randomBytes(32));

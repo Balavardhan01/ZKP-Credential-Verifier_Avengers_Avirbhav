@@ -76,24 +76,19 @@ export const ProtocolProvider = ({ children }: { children: ReactNode }) => {
   const [issuedCredentials, _setIssuedCredentials] = useState<IssuedCredential[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const syncToStorage = useCallback((
-    newCred: StudentCredential | null, 
-    newState: VerificationState, 
-    newHash: string | null, 
-    newBlock: number | null,
-    newPolicy: ZkpPolicy,
-    newLogs: AuditLog[],
-    newIssued: IssuedCredential[]
-  ) => {
+  // Sync state to storage without creating circular dependencies
+  useEffect(() => {
+    if (!isInitialized) return; // Don't sync during initialization
+    
     if (typeof window !== "undefined") {
       const stateObj = {
-        studentCredential: newCred,
-        verificationState: newState,
-        txHash: newHash,
-        blockNumber: newBlock,
-        policy: newPolicy,
-        auditLogs: newLogs,
-        issuedCredentials: newIssued
+        studentCredential,
+        verificationState,
+        txHash,
+        blockNumber,
+        policy,
+        auditLogs,
+        issuedCredentials
       };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateObj));
       
@@ -101,79 +96,63 @@ export const ProtocolProvider = ({ children }: { children: ReactNode }) => {
       channel.postMessage({ type: "SYNC_STATE", payload: stateObj });
       channel.close();
     }
+  }, [studentCredential, verificationState, txHash, blockNumber, policy, auditLogs, issuedCredentials, isInitialized]);
+
+  const updateCredential = useCallback((cred: StudentCredential | null) => {
+    _setStudentCredential(cred);
   }, []);
 
-  const updateCredential = (cred: StudentCredential | null) => {
-    _setStudentCredential(cred);
-    syncToStorage(cred, verificationState, txHash, blockNumber, policy, auditLogs, issuedCredentials);
-  };
-
-  const setVerificationState = (state: VerificationState) => {
+  const setVerificationState = useCallback((state: VerificationState) => {
     _setVerificationState(state);
-    syncToStorage(studentCredential, state, txHash, blockNumber, policy, auditLogs, issuedCredentials);
-  };
+  }, []);
 
-  const setTxHash = (hash: string | null) => {
+  const setTxHash = useCallback((hash: string | null) => {
     _setTxHash(hash);
-    syncToStorage(studentCredential, verificationState, hash, blockNumber, policy, auditLogs, issuedCredentials);
-  };
+  }, []);
 
-  const setBlockNumber = (num: number | null) => {
+  const setBlockNumber = useCallback((num: number | null) => {
     _setBlockNumber(num);
-    syncToStorage(studentCredential, verificationState, txHash, num, policy, auditLogs, issuedCredentials);
-  };
+  }, []);
 
-  // Crucial: Changing the policy resets the verification state across all tabs
-  const setPolicy = (newPolicy: ZkpPolicy) => {
+  const setPolicy = useCallback((newPolicy: ZkpPolicy) => {
     _setPolicy(newPolicy);
     _setVerificationState("IDLE");
     _setTxHash(null);
-    syncToStorage(studentCredential, "IDLE", null, blockNumber, newPolicy, auditLogs, issuedCredentials);
-  };
+  }, []);
 
-  const resetVerification = () => {
+  const resetVerification = useCallback(() => {
     _setVerificationState("IDLE");
     _setTxHash(null);
-    syncToStorage(studentCredential, "IDLE", null, blockNumber, policy, auditLogs, issuedCredentials);
-  };
+  }, []);
 
-  const addAuditLog = (log: AuditLog) => {
-    const updatedLogs = [log, ...auditLogs];
-    _setAuditLogs(updatedLogs);
-    syncToStorage(studentCredential, verificationState, txHash, blockNumber, policy, updatedLogs, issuedCredentials);
-  };
+  const addAuditLog = useCallback((log: AuditLog) => {
+    _setAuditLogs(prev => [log, ...prev]);
+  }, []);
 
-  const issueNewCredential = (cred: IssuedCredential) => {
-    const updatedIssued = [cred, ...issuedCredentials];
-    _setIssuedCredentials(updatedIssued);
-    syncToStorage(studentCredential, verificationState, txHash, blockNumber, policy, auditLogs, updatedIssued);
-  };
+  const issueNewCredential = useCallback((cred: IssuedCredential) => {
+    _setIssuedCredentials(prev => [cred, ...prev]);
+  }, []);
 
-  const revokeCredential = (id: string) => {
-    const updatedIssued = issuedCredentials.map(c => c.id === id ? { ...c, status: "Revoked" as const } : c);
-    _setIssuedCredentials(updatedIssued);
-    syncToStorage(studentCredential, verificationState, txHash, blockNumber, policy, auditLogs, updatedIssued);
-  };
+  const revokeCredential = useCallback((id: string) => {
+    _setIssuedCredentials(prev => 
+      prev.map(c => c.id === id ? { ...c, status: "Revoked" as const } : c)
+    );
+  }, []);
 
-const issueCompleteCredential = (student: StudentCredential, issued: IssuedCredential) => {
+  const issueCompleteCredential = useCallback((student: StudentCredential, issued: IssuedCredential) => {
     _setStudentCredential(student);
-    const updatedIssued = [issued, ...issuedCredentials];
-    _setIssuedCredentials(updatedIssued);
-    
-    // FIX: Automatically reset verification state to IDLE when new identity is issued.
-    // This forces the Student to manually click "Generate Proof" again.
+    _setIssuedCredentials(prev => [issued, ...prev]);
     _setVerificationState("IDLE");
     _setTxHash(null);
-    
-    syncToStorage(student, "IDLE", null, blockNumber, policy, auditLogs, updatedIssued);
-  };
-  const logout = () => {
+  }, []);
+
+  const logout = useCallback(() => {
     _setStudentCredential(null);
     _setVerificationState("IDLE");
     _setTxHash(null);
     _setBlockNumber(null);
-    syncToStorage(null, "IDLE", null, null, policy, auditLogs, issuedCredentials);
-  };
+  }, []);
+
 
   useEffect(() => {
     const loadStateFromStorage = () => {
@@ -191,8 +170,6 @@ const issueCompleteCredential = (student: StudentCredential, issued: IssuedCrede
         } catch (e) {
           console.error("Failed to parse storage", e);
         }
-      } else {
-        syncToStorage(null, "IDLE", null, null, policy, [], []);
       }
       setIsInitialized(true);
     };

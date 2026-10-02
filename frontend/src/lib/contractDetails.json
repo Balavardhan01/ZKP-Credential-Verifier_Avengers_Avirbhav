@@ -1,32 +1,32 @@
 {
-  "address": "0x0000000000000000000000000000000000000000",
+  "address": "0x5fbdb2315678afccb333f8a9c36b1a1fd0a33759",
   "abi": [
     {
       "anonymous": false,
       "inputs": [
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "string",
           "name": "studentDID",
           "type": "string"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "uint256",
           "name": "gpaThreshold",
           "type": "uint256"
         },
         {
-          "indexed": false,
+          "indexed": true,
           "internalType": "bool",
           "name": "success",
           "type": "bool"
         },
         {
           "indexed": false,
-          "internalType": "bytes32",
-          "name": "txHash",
-          "type": "bytes32"
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
         }
       ],
       "name": "ProofVerified",

@@ -10,8 +10,8 @@ async function main() {
   const address = await verifier.getAddress();
   console.log("CredentialVerifier deployed to:", address);
 
-  // Export contract address and ABI directly to the frontend
-  const frontendDir = path.join(__dirname, "../../frontend/lib");
+  // Export contract address and ABI to the correct frontend path
+  const frontendDir = path.join(__dirname, "../../frontend/src/lib");
   if (!fs.existsSync(frontendDir)) {
     fs.mkdirSync(frontendDir, { recursive: true });
   }
@@ -26,7 +26,7 @@ async function main() {
     path.join(frontendDir, "contractDetails.json"),
     JSON.stringify(details, null, 2)
   );
-  console.log("Saved contract details to frontend/lib/contractDetails.json");
+  console.log("Saved contract details to frontend/src/lib/contractDetails.json");
 }
 
 main().catch((error) => {
